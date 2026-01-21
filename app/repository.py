@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, attributes
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 
 Base = declarative_base()
@@ -115,7 +115,12 @@ class UserRepository(BaseRepository):
         if user.scores is None:
             user.scores = {}
         
+        # Обновляем значение в словаре
         user.scores[game] = score
+        # Явно помечаем поле как измененное для SQLAlchemy
+        # Это необходимо, так как SQLAlchemy не отслеживает изменения внутри JSON полей
+        attributes.flag_modified(user, "scores")
+        
         self.session.commit()
         self.session.refresh(user)
         return user
